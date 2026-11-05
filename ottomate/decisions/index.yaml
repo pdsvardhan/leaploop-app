@@ -1,0 +1,119 @@
+decisions:
+  - id: adr-001-leaploop-initial-staging
+    project_slug: leaploop
+    title: Initial Stage 1 staging for LeapLoop
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - staging
+      - initial
+      - curated
+    body_path: ottomate/decisions/adr-001-leaploop-initial-staging.md
+  - id: adr-002-leaploop-rules-not-llm
+    project_slug: leaploop
+    title: Job-match scoring is a deterministic rules engine — no LLM in the
+      recurring loop, so results stay explainable and free
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - tailoring
+      - architecture
+      - curated
+      - cat:system
+    body_path: ottomate/decisions/adr-002-leaploop-rules-not-llm.md
+  - id: adr-003-leaploop-telegram-only-push
+    project_slug: leaploop
+    title: Notifications via Telegram only — Web Push complexity cut until it earns
+      its keep
+    status: superseded
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - notifications
+      - curated
+      - cat:product
+    body_path: ottomate/decisions/adr-003-leaploop-telegram-only-push.md
+    superseded_by: adr-010-leaploop-telegram-dropped
+  - id: adr-004-leaploop-tiering-curated-wikidata
+    project_slug: leaploop
+    title: Company reputation tiers from a curated list plus keyless Wikidata — paid
+      APIs dropped
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - tiering
+      - curated
+      - cat:product
+    body_path: ottomate/decisions/adr-004-leaploop-tiering-curated-wikidata.md
+  - id: adr-005-leaploop-sqlite-not-xlsx
+    project_slug: leaploop
+    title: State lives in SQLite, not spreadsheets — queryable history instead of
+      xlsx maintenance
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - data
+      - curated
+      - cat:system
+    body_path: ottomate/decisions/adr-005-leaploop-sqlite-not-xlsx.md
+  - id: adr-006-leaploop-straight-to-v2
+    project_slug: leaploop
+    title: Skip the interim release — build straight to the full v2 design
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - scope
+      - curated
+      - cat:product
+    body_path: ottomate/decisions/adr-006-leaploop-straight-to-v2.md
+  - id: adr-007-leaploop-light-only
+    project_slug: leaploop
+    title: Light-only theme (dark mode deferred)
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - ui
+      - theme
+      - curated
+    body_path: ottomate/decisions/adr-007-leaploop-light-only.md
+  - id: adr-008-leaploop-build-from-reference
+    project_slug: leaploop
+    title: Cockpit components built bespoke from the reference design (no catalog
+      pick)
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - ui
+      - components
+      - curated
+    body_path: ottomate/decisions/adr-008-leaploop-build-from-reference.md
+  - id: adr-009-leaploop-tech-stack
+    project_slug: leaploop
+    title: Cockpit tech stack -- FastAPI + React/Vite on shared SQLite
+    status: accepted
+    date: 2026-06-03T00:00:00.000Z
+    tags:
+      - tech
+      - architecture
+      - curated
+    body_path: ottomate/decisions/adr-009-leaploop-tech-stack.md
+  - id: adr-010-leaploop-telegram-dropped
+    project_slug: leaploop
+    title: "Telegram push dropped: no notification channel; the Triage queue is the
+      only surface"
+    status: accepted
+    date: 2026-06-04T00:00:00.000Z
+    tags:
+      - notifications
+      - curated
+      - cat:product
+    body_path: ottomate/decisions/adr-010-leaploop-telegram-dropped.md
+  - id: adr-011-leaploop-download-filename
+    project_slug: leaploop
+    title: Downloaded résumés carry the company; the constant filename stays on disk
+    status: accepted
+    date: 2026-09-04T00:00:00.000Z
+    tags:
+      - ui
+      - curated
+      - cat:product
+    body_path: ottomate/decisions/adr-011-leaploop-download-filename.md

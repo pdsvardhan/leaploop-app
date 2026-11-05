@@ -1,0 +1,112 @@
+risks:
+  - id: 44
+    project_slug: leaploop
+    risk_type_id: no-tests
+    status: open
+    hidden_by_default: false
+    notes: New build; no automated tests yet.
+    created_at: 2026-06-02T18:02:04.000Z
+  - id: 45
+    project_slug: leaploop
+    risk_type_id: no-error-tracking
+    status: open
+    hidden_by_default: false
+    notes: No error tracking wired yet.
+    created_at: 2026-06-02T18:02:04.000Z
+  - id: 46
+    project_slug: leaploop
+    risk_type_id: integration-contract-drift
+    status: open
+    hidden_by_default: false
+    notes: ATS feed JSON (esp Workday/iCIMS) + LinkedIn alert-email HTML can change
+      and break parsing; mitigated by Task A verification + LinkedIn backstop.
+    created_at: 2026-06-02T18:02:04.000Z
+  - id: 47
+    project_slug: leaploop
+    risk_type_id: data-drift-undetected
+    status: open
+    hidden_by_default: false
+    notes: Stale/duplicate roles if dedupe key or applied cross-ref misfires.
+    created_at: 2026-06-02T18:02:04.000Z
+  - id: 48
+    project_slug: leaploop
+    risk_type_id: no-rate-limit
+    status: open
+    hidden_by_default: false
+    notes: Cockpit API has no rate limiting; single-user behind Authentik SSO so low
+      severity.
+    created_at: 2026-06-02T18:02:04.000Z
+  - id: 49
+    project_slug: leaploop
+    risk_type_id: no-secret-rotation
+    status: open
+    hidden_by_default: false
+    notes: Gmail app-password (and the Authentik proxy client secret) are not on a
+      rotation cadence. (The Telegram bot token was removed when Telegram push
+      was dropped - adr-010.)
+    created_at: 2026-06-02T18:02:04.000Z
+policy:
+  project_slug: leaploop
+  exposure: invite-only
+  access_control: auth-required
+  data_sensitivity_tier: personal-pii
+  encryption_at_rest: false
+  encryption_in_transit: true
+  key_management: env-vars
+  rate_limiting_enabled: false
+auth_config:
+  project_slug: leaploop
+  strategy: sso
+  providers:
+    - authentik
+  session_management: cookie
+  mfa_supported: false
+  auth_library: n-a
+third_party_services:
+  - id: 19
+    project_slug: leaploop
+    name: ATS job boards (Greenhouse, Lever, Ashby, Workday, amazon.jobs)
+    purpose: Source of truth for live role postings (JSON feeds)
+    data_shared: None outbound - read-only polling
+    auth_method: anonymous
+    failure_mode: Skip feed + record feed_health err; LinkedIn backstop covers gaps
+    terms_acceptance: n-a
+  - id: 20
+    project_slug: leaploop
+    name: Gmail (IMAP)
+    purpose: Read LinkedIn job-alert emails and detect application-confirmation emails
+    data_shared: IMAP login via app password
+    auth_method: basic-auth
+    failure_mode: Alert + skip; manual override for applied state
+    terms_acceptance: accepted
+  - id: 22
+    project_slug: leaploop
+    name: Wikidata
+    purpose: Keyless company size/notability for B/C tiering
+    data_shared: Company name in query
+    auth_method: anonymous
+    failure_mode: Silent skip - company stays unverified
+    terms_acceptance: n-a
+  - id: 23
+    project_slug: leaploop
+    name: Authentik (SSO)
+    purpose: Single-user authentication gate for the cockpit
+    data_shared: Session identity
+    auth_method: oauth
+    failure_mode: No cockpit access if SSO is down
+    terms_acceptance: accepted
+secrets:
+  - id: 14
+    project_slug: leaploop
+    name: GMAIL_APP_PASSWORD
+    where_stored: env-file
+    what_for: Gmail IMAP login for LinkedIn-alert and confirmation reading
+    rotation_cadence: ad-hoc
+  - id: 16
+    project_slug: leaploop
+    name: AUTHENTIK_CLIENT_SECRET
+    where_stored: env-file
+    what_for: Client secret for the Authentik proxy/OAuth provider that fronts the
+      cockpit (forward-auth). Lives on the Authentik side; the app itself trusts
+      upstream x-authentik-* headers and does NOT read this secret.
+    rotation_cadence: quarterly

@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+**/*.pyc
+data
+cockpit/web/node_modules
+cockpit/web/dist
+*.bak
+*.db
+*.db.bak-*
+_src.tgz
+ottomate
+sample_tailored_CV.pdf

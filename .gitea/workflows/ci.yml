@@ -1,0 +1,36 @@
+name: ci
+on:
+  push:
+    branches: ['**']
+  pull_request:
+jobs:
+  quality:                      # always hard — deps resolve + code compiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q .
+  web:                          # always hard — the cockpit is half the surface area
+    runs-on: ubuntu-latest      # a broken JSX edit used to reach the image before anyone noticed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      # Strict: no `|| npm install` fallback. A lockfile that drifts out of sync with
+      # package.json must fail the job, not resolve fresh and hide the drift.
+      - run: npm ci --no-audit --no-fund
+        working-directory: cockpit/web
+      - run: npm run build
+        working-directory: cockpit/web
+  tests:                        # gated behind RUN_TESTS
+    if: ${{ vars.RUN_TESTS == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r requirements.txt
+      - run: pip install pytest
+      - run: pytest

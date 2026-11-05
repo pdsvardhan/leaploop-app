@@ -1,0 +1,5 @@
+# LeapLoop cockpit backend (FastAPI). Engine deps (PyYAML) are in ../requirements.txt.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+python-multipart>=0.0.9

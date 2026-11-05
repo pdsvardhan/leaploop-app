@@ -1,0 +1,63 @@
+conceptual:
+  project_slug: leaploop
+  has_data_layer: true
+  retention_policy_type: forever
+  retention_reason: Single-user job-hunt history; roles and applied records kept
+    for dedupe and audit.
+  freshness_threshold_hours: 2
+  freshness_notification_target: log
+sources:
+  - id: 25
+    project_slug: leaploop
+    name: ATS company feeds (Greenhouse/Lever/Ashby/Workday/amazon.jobs)
+    source_type: external-api
+    url_or_path: per-company ATS JSON endpoints
+    authentication: anonymous
+    ingestion_method: scheduled-fetch
+    ingestion_frequency: ~30 min
+    failure_handling: alert-and-skip
+    refresh_strategy: upsert
+    watermark_field: first_seen
+    deduplication_strategy: primary-key
+    backfill_supported: false
+  - id: 26
+    project_slug: leaploop
+    name: LinkedIn job-alert emails (Gmail-IMAP)
+    source_type: external-api
+    url_or_path: imap.gmail.com / jobalerts-noreply@linkedin.com
+    authentication: basic-auth
+    ingestion_method: scheduled-fetch
+    ingestion_frequency: daily
+    failure_handling: alert-and-skip
+    refresh_strategy: append-only
+    deduplication_strategy: primary-key
+    backfill_supported: false
+  - id: 27
+    project_slug: leaploop
+    name: Wikidata reputability lookup
+    source_type: external-api
+    url_or_path: https://www.wikidata.org (keyless query)
+    authentication: anonymous
+    ingestion_method: user-triggered
+    ingestion_frequency: on-demand (tiering)
+    failure_handling: silent-skip
+    refresh_strategy: full-refresh
+    deduplication_strategy: last-write-wins
+    backfill_supported: false
+  - id: 28
+    project_slug: leaploop
+    name: Applications tracker import (74 applied rows)
+    source_type: csv-upload
+    url_or_path: APPLICATIONS_TRACKER.xlsx
+    authentication: anonymous
+    ingestion_method: one-time-upload
+    ingestion_frequency: once
+    failure_handling: alert-and-abort
+    refresh_strategy: full-refresh
+    deduplication_strategy: primary-key
+    backfill_supported: false
+contract:
+  project_slug: leaploop
+  database_engine: sqlite
+  storage_location: in-project-sqlite
+  migration_tooling: raw-sql

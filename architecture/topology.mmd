@@ -1,0 +1,21 @@
+graph TD
+  U["Owner (phone / laptop)"] -->|HTTPS| CF["Cloudflare Tunnel"]
+  CF --> NPM["NPM proxy<br/>leaploop.vault7a.xyz"]
+  NPM --> AUTH["Authentik forward-auth<br/>(single user)"]
+  AUTH --> COCK["Cockpit container :8509"]
+  subgraph COCK["Cockpit container :8509"]
+    WEB["React/Vite static (7 screens)"]
+    API["FastAPI /api"]
+    WEB --> API
+    API --> ENG["engine/ package"]
+  end
+  CRON["Watcher cron (every 30 min)<br/>run_cycle.sh"] --> ENG
+  ENG --> DB[("SQLite<br/>data/leaploop.db")]
+  API --> DB
+  ENG --> TEX["tectonic / texlive<br/>-> constant-named PDF"]
+  TEX --> VOL[("PDF volume")]
+  API --> VOL
+  ENG -->|Tier-A| TG["Telegram leap_loop_bot"]
+  ENG -->|IMAP| GM["Gmail (alerts + confirmations)"]
+  ENG -->|JSON feeds| ATS["ATS boards: Greenhouse/Lever/Ashby/Workday/amazon.jobs"]
+  ENG -->|keyless| WIKI["Wikidata (tiering)"]

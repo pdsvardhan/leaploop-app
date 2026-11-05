@@ -1,0 +1,113 @@
+# LeapLoop deterministic tailoring rules — JD keyword clusters -> resume flex overrides.
+# No LLM. Highest-scoring cluster wins; ties broken by `priority` (lower number = wins first).
+# Low/zero confidence => fall back to `default` (the safe master). NEVER emit a wrong-but-confident CV.
+#
+# Matching is word-aware (see engine/tailor.py): a keyword matches as a word, optionally
+# inflected. Do NOT add a keyword shorter than 3 characters unless it is a real acronym —
+# short strings were what let 'ai' fire inside "mainstream" before iter-170.
+#
+# `kind: process` marks a cluster that describes HOW a PM works rather than WHAT they work on.
+# Process clusters are fallback-only: they are considered solely when no domain cluster matches.
+# Measured 2026-09-04 over 139 real JDs — 'roadmap' appeared in 101 and 'delivery' in 96, which
+# handed agile_delivery 53% of all JDs and left bfsi_compliance with zero wins.
+#
+# `label` is what the swap-variant dropdown shows. Adding a cluster here is enough — the API
+# derives the variant list from this file (no second list to keep in sync).
+#
+# The flex text fields (descriptor, domain_add, product_add, ai_add, tools_add) must stay
+# PLAIN TEXT. They share a code path with user-typed chip values, which are LaTeX-escaped at
+# render time, so a backslash or & put here would print literally. Only p5_bullets may
+# contain LaTeX — that path is deliberately never escaped.
+#
+# P5 = the swappable 5th HSBC bullet (\flexHSBCFive). Every bullet below is confirmed true.
+# P5-D (fintech_commission) and P5-G (data_decisioning) were confirmed by Sai on 2026-09-04
+# and are now wired to the fintech and data clusters.
+
+default:
+  label: "Default (safe master)"
+  descriptor: "enterprise and e-commerce"
+  p5: allocation
+  third_project: vault7a
+  edu_ab: false
+
+clusters:
+  - name: fintech_payments
+    label: "Fintech / payments"
+    kind: domain
+    priority: 1
+    keywords: [payments, upi, settlement, reconciliation, lending, credit, fintech, wallet, neobank, billing, invoicing, transaction, underwriting, kyc, banking]
+    descriptor: "enterprise and fintech"
+    p5: fintech_commission
+    domain_add: ", Fintech, B2B"
+    third_project: vault7a
+  - name: ecommerce_marketplace
+    label: "E-commerce / marketplace"
+    kind: domain
+    priority: 2
+    keywords: [e-commerce, ecommerce, marketplace, retail, catalog, supply chain, logistics, seller, buyer, order, cart, fulfilment, fulfillment, commerce, consumer]
+    descriptor: "enterprise and e-commerce"
+    p5: allocation
+    domain_add: ", Marketplace, B2C"
+    third_project: portfolio
+  - name: platform_b2b
+    label: "Platform / B2B"
+    kind: domain
+    priority: 2
+    keywords: [platform, api, b2b, saas, enterprise software, integration, developer, infrastructure, multi-tenant, sdk, devtools, developer tools]
+    descriptor: "enterprise platform"
+    p5: platform_designsystem
+    domain_add: ", B2B, Enterprise Software"
+    product_add: ", System Integrations"
+    third_project: vault7a
+  - name: ai_native
+    label: "AI-native"
+    kind: domain
+    priority: 1
+    keywords: [ai, llm, genai, generative ai, agent, agentic, prompt, copilot, vibe coding, claude code, ml product, ai product]
+    descriptor: "AI-native and enterprise"
+    ai_add: ", Claude Code, Prompt Engineering"
+    p5: allocation
+    third_project: vault7a
+  - name: data_product
+    label: "Data product"
+    kind: domain
+    priority: 2
+    keywords: [data product, analytics, sql, dashboard, metrics, experimentation, a/b test, ab test, insights, decisioning, measurement, reporting]
+    descriptor: "enterprise and data-driven"
+    p5: data_decisioning
+    edu_ab: true
+    product_add: ", Data Analysis"
+    third_project: vault7a
+  - name: bfsi_compliance
+    label: "BFSI / compliance"
+    kind: domain
+    priority: 2
+    keywords: [bfsi, banking, compliance, regulated, audit, documentation, risk, collections, governance]
+    descriptor: "enterprise and BFSI"
+    p5: bfsi_docs
+    domain_add: ", BFSI"
+    third_project: vault7a
+  - name: agile_delivery
+    label: "Agile delivery"
+    kind: process          # fallback-only: wins only when no domain cluster matches
+    priority: 3
+    keywords: [scrum, agile, backlog, product owner, sprint, epics, user stories, delivery, jira, roadmap]
+    descriptor: "enterprise"
+    p5: agile_backlog
+    product_add: ", Agile/Scrum, Requirement Gathering"
+    third_project: vault7a
+
+# Whole-bullet \flexHSBCFive options (LaTeX). All confirmed true.
+p5_bullets:
+  allocation: "\\item Re-architected the agency allocation engine --- which assigns defaulted loan cases to external collections agencies --- extending it with new rules across product type, region, and agency capacity."
+  bfsi_docs: "\\item Authored nine enterprise user guides and the documentation standards behind them, giving the collections platform an audit-ready knowledge base adopted across the operation."
+  analytical: "\\item Scoped build effort and complexity across the platform's modules and ran a reusable-component analysis that shaped delivery sequencing and engineering estimates."
+  platform_designsystem: "\\item Established a library of reusable interface components and a consistent interaction pattern across the platform's modules, cutting rebuild effort and holding UX consistent under the bank's design-system standards."
+  agile_backlog: "\\item Owned the delivery backlog end to end --- breaking the build into epics and user stories, prioritizing against engineering capacity, and driving sprint demos and sign-offs."
+  fintech_commission: "\\item Built the commission and invoicing engine that computes agency payouts across rate structures and reconciles billing for external collections partners."
+  data_decisioning: "\\item Defined the data and rule logic behind case routing and prioritization, validating outcomes and tuning thresholds across product, region, and risk tiers."
+
+# Honest gaps — surfaced as a fit caveat at pick-time; NEVER auto-added to the resume.
+# Word-aware like the clusters: 'rag' used to match inside average/leverage and flagged a
+# fabricated ML-modeling gap on 30 of 139 JDs.
+honest_gaps: {}   # private notes, left out of the public copy

@@ -1,0 +1,100 @@
+slug: leaploop
+display_name: LeapLoop
+summary:
+  tagline: A job-hunt cockpit that finds and tailors — you just apply
+  short_description: "An automated job-hunt pipeline for product-manager roles in
+    India. It watches company career feeds around the clock, filters to roles
+    that fit, tailors a resume PDF to each job description, and queues
+    everything behind one decision: apply or skip."
+  core_idea: An always-on, self-hosted job-hunt automation for Sai Vardhan Palli.
+    A deterministic Python watcher polls company ATS JSON feeds
+    (Greenhouse/Lever/Ashby/Workday/amazon.jobs) about every 30 min and reads
+    LinkedIn job-alert emails via Gmail-IMAP, dedupes, applies locked filters
+    (India-only PM roles APM to Senior PM, with excludes), and tiers companies
+    A/B/C/unverified via a curated list + Wikidata. New roles land in a Triage
+    queue (yes/no) in a private cockpit (leaploop.vault7a.xyz, Authentik SSO),
+    with Tier-A roles surfaced first. On 'yes', a rules engine maps JD keywords
+    to resume flex macros + a P5 variant, writes a per-JD LaTeX file, and
+    compiles a constant-named PDF via a texlive container. The Apply queue shows
+    the PDF + apply link + optional referral draft; he applies manually; a Gmail
+    confirmation auto-marks 'applied' (manual override available). No
+    auto-apply, no scraping, no LLM in the recurring loop (rules only;
+    metered-API upgrade optional later). (An earlier Telegram push for Tier-A
+    roles was built then dropped 2026-06-04 - adr-010; there is no push channel,
+    the Triage queue is the only surface.)
+current_status: shipped
+lifecycle_phase: maintained
+scope_size: large
+target_devices: both
+hosting_target: vault7a-docker
+port: 8509
+public_url: https://leaploop.vault7a.xyz
+repository_url: http://git.vault7a.xyz/pdsv/leaploop
+problem_statement: Manually tracking India PM openings across dozens of company
+  career pages and LinkedIn, then hand-tailoring a resume per JD, is slow and
+  easy to drop. Vardhan wants discovery, fit-filtering, per-JD resume tailoring,
+  and a ready PDF + apply link automated end-to-end, so his only recurring acts
+  are picking roles and clicking apply.
+non_goals:
+  - No auto-apply (he applies manually by choice; ToS/ban + quality risk).
+  - No LinkedIn scraping or driving the LinkedIn site on a timer.
+  - No weighted-score or black-box ranking math.
+  - No LLM or metered API in the recurring loop (deterministic rules only).
+  - No xlsx maintenance, no kanban/funnel, no analytics in v1.
+  - No image/OCR or file upload for manual PDF (paste text + role URL only).
+  - Never fabricate resume content for honest gaps.
+success_criteria:
+  - A new India PM role on a watched ATS feed reaches the Triage queue in <= 30
+    minutes.
+  - A new Tier-A role surfaces in the Triage queue (badged and sorted first)
+    within ~30 minutes of discovery.
+  - A 'Yes' produces a correctly-compiling, constant-named tailored PDF in the
+    Apply queue with zero manual LaTeX.
+  - Applying + the confirmation email auto-flips the role to 'applied' with the
+    submitted resume recorded; no manual tracker edits.
+  - Daily use is two quick passes (triage, then apply) on phone or laptop with
+    no other upkeep.
+preferences:
+  likes:
+    - ATS JSON feeds over scraping (protects the account he applies from)
+    - Deterministic rules engine, no LLM in the recurring loop
+    - "Two-queue cockpit: Triage (yes/no) + Apply (PDF ready)"
+    - texlive PDF identical to Overleaf output
+    - Constant resume filename Sai_Vardhan_Palli_Product_Manager_IIMB_CV.pdf
+    - Reuse the existing resume engine (preamble/body.tex + flex macros) and
+      tracker
+    - Free public reputability signals (ATS-board presence + Wikidata)
+    - Green Plus-Jakarta 'Donezo' UI, light-only
+    - Self-hosted on vault7a at $0 recurring
+  dislikes:
+    - Auto-apply (kills quality; ToS/ban risk)
+    - LinkedIn scraping or driving the site on a timer
+    - Weighted-score or black-box ranking math
+    - Metered Claude API in the recurring loop
+    - Faking resume content for honest gaps
+    - Maintaining the xlsx tracker by hand
+    - AI waffle, hedging, or effort estimates
+  must_haves:
+    - India-only PM roles per locked config.py filters
+    - No scraping the account he applies from
+    - Human footprint = pick + apply only
+    - Per-JD tailored PDF via rules + texlive, constant filename
+    - Tier A/B/C/unverified badges; show Tier-A only when crowded
+    - Authentik SSO, single user
+    - Gmail auto-confirm 'applied' with manual override
+    - Swap-variant control in the Apply queue
+    - Manual 'Generate PDF from a JD' (paste text or role URL)
+    - DB-backed state (no xlsx); import the 41 prior applications once for
+      dedupe (the source tracker xlsx had 74 rows; 41 were Status='Applied')
+  avoid:
+    - Interim v1 release (go straight to full v2)
+    - Image/OCR or file upload for manual PDF (text + URL only)
+    - OpenCorporates (paid)
+    - Push channels — Web Push and Telegram both dropped (adr-010); the Triage
+      queue is the only surface
+    - Dark mode (light-only)
+    - Kanban/funnel/analytics in the cockpit
+    - Changing the referral message wording beyond name/role/company
+tags:
+  - personal
+  - public-facing

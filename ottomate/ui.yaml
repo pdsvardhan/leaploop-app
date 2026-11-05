@@ -1,0 +1,268 @@
+pages:
+  - id: page-login
+    title: Login
+    route: /login
+    purpose: Authentik SSO splash - the only unauthenticated entry point.
+    layout_type: form
+    loading_state: spinner
+    error_state: SSO unreachable - retry or contact admin.
+    permissions: anonymous
+    mobile_handling: responsive
+    entry_points:
+      - Direct navigation to jobs.vault7a.xyz while signed out
+    components:
+      - name: sso-splash
+        purpose_on_page: Branded sign-in panel
+        category: display
+        picked: false
+        variants: []
+      - name: sso-login-button
+        purpose_on_page: Redirects to Authentik
+        category: navigation
+        data_produced: auth redirect
+        picked: false
+        variants: []
+  - id: page-triage
+    title: Triage
+    route: /triage
+    purpose: Fast yes/no on fresh roles.
+    layout_type: list
+    empty_state: No new roles to triage.
+    loading_state: skeleton
+    error_state: Couldn't load the triage queue.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Triage tile on Home
+    components:
+      - name: role-card
+        purpose_on_page: "One role: company/title/location/source/age"
+        category: display
+        data_consumed: role
+        picked: false
+        variants: []
+      - name: tier-badge
+        purpose_on_page: A/B/C/U reputation badge
+        category: display
+        data_consumed: role.tier
+        picked: false
+        variants: []
+      - name: triage-action-controls
+        purpose_on_page: Yes / No / Snooze / Mute company
+        category: input
+        data_produced: role.state
+        picked: false
+        variants: []
+      - name: jd-preview-modal
+        purpose_on_page: Read the full JD without leaving the queue
+        category: overlay
+        data_consumed: role.jd_text
+        picked: false
+        variants: []
+      - name: filter-sort-bar
+        purpose_on_page: Filter to Tier-A, sort by tier/age
+        category: input
+        data_produced: query
+        picked: false
+        variants: []
+  - id: page-apply
+    title: Apply
+    route: /apply
+    purpose: Download the tailored PDF, apply, and confirm.
+    layout_type: list
+    empty_state: Nothing ready to apply yet.
+    loading_state: skeleton
+    error_state: Couldn't load the apply queue.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Apply tile on Home
+      - After a Yes in Triage
+    components:
+      - name: apply-card
+        purpose_on_page: One role ready to apply
+        category: display
+        data_consumed: role + apply_item
+        picked: false
+        variants: []
+      - name: pdf-preview
+        purpose_on_page: Preview/download the constant-named PDF
+        category: overlay
+        data_consumed: pdf_path
+        picked: false
+        variants: []
+      - name: apply-link-button
+        purpose_on_page: Opens the ATS apply page
+        category: navigation
+        data_consumed: role.url
+        picked: false
+        variants: []
+      - name: swap-variant-control
+        purpose_on_page: Regenerate with a different P5/flex variant
+        category: input
+        data_consumed: variants
+        data_produced: role.variant
+        picked: false
+        variants: []
+      - name: copy-referral-button
+        purpose_on_page: Copy the verbatim referral draft (warm-path)
+        category: input
+        data_consumed: contact
+        picked: false
+        variants: []
+      - name: applied-toggle
+        purpose_on_page: Mark/unmark applied (auto + manual override)
+        category: input
+        data_produced: role.applied
+        picked: false
+        variants: []
+  - id: page-tracker
+    title: Tracker
+    route: /tracker
+    purpose: Searchable record of every application.
+    layout_type: list
+    empty_state: No applications recorded yet.
+    loading_state: skeleton
+    error_state: Couldn't load the tracker.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Tracker nav
+    components:
+      - name: tracker-table
+        purpose_on_page: company / role / resume / date / source / status
+        category: display
+        data_consumed: applied roles
+        picked: false
+        variants: []
+      - name: tracker-search
+        purpose_on_page: Search by company or role
+        category: input
+        data_produced: query
+        picked: false
+        variants: []
+      - name: status-badge
+        purpose_on_page: Application status
+        category: display
+        data_consumed: role.state
+        picked: false
+        variants: []
+      - name: csv-export-button
+        purpose_on_page: Export the list to CSV
+        category: input
+        data_consumed: applied roles
+        data_produced: CSV file
+        picked: false
+        variants: []
+  - id: page-generate
+    title: Generate PDF
+    route: /generate
+    purpose: Tailor a PDF from pasted JD text or a role URL.
+    layout_type: form
+    loading_state: progressive
+    error_state: Couldn't compile - falling back to the safe master.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Generate entry on Home
+    components:
+      - name: jd-text-input
+        purpose_on_page: Paste the JD text
+        category: input
+        data_produced: jd_text
+        picked: false
+        variants: []
+      - name: role-url-input
+        purpose_on_page: Or paste a role URL
+        category: input
+        data_produced: jd_url
+        picked: false
+        variants: []
+      - name: generate-button
+        purpose_on_page: Run the rules tailor + compile
+        category: input
+        data_produced: pdf_path
+        picked: false
+        variants: []
+      - name: pdf-result-preview
+        purpose_on_page: Preview/download the result
+        category: overlay
+        data_consumed: pdf_path
+        picked: false
+        variants: []
+  - id: leaploop-home
+    title: Home / Inbox
+    route: /
+    purpose: Two action tiles (Triage N, Apply M) + watcher-health strip +
+      Generate-PDF entry.
+    layout_type: dashboard
+    empty_state: Nothing to triage or apply - you're all caught up.
+    loading_state: skeleton
+    error_state: Couldn't load counts - pull to refresh.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Post-login landing
+      - Home nav
+    components:
+      - name: triage-tile
+        purpose_on_page: Pending-triage count, links to Triage
+        category: display
+        data_consumed: triage count
+        picked: false
+        variants: []
+      - name: apply-tile
+        purpose_on_page: Ready-to-apply count, links to Apply
+        category: display
+        data_consumed: apply count
+        picked: false
+        variants: []
+      - name: watcher-health-strip
+        purpose_on_page: Feed health + last-poll status
+        category: feedback
+        data_consumed: feed_health
+        picked: false
+        variants: []
+      - name: generate-entry-button
+        purpose_on_page: Opens manual Generate-PDF
+        category: navigation
+        picked: false
+        variants: []
+  - id: leaploop-settings
+    title: Settings
+    route: /settings
+    purpose: Filters, watch-list/tiers, integrations, watcher health.
+    layout_type: form
+    loading_state: skeleton
+    error_state: Couldn't load settings.
+    permissions: logged-in
+    mobile_handling: responsive
+    entry_points:
+      - Settings nav
+    components:
+      - name: filters-editor
+        purpose_on_page: Edit role types/levels/excludes/locations
+        category: input
+        data_consumed: config
+        data_produced: config
+        picked: false
+        variants: []
+      - name: watchlist-editor
+        purpose_on_page: Edit watch-list companies + tiers
+        category: input
+        data_consumed: company_tier
+        data_produced: company_tier
+        picked: false
+        variants: []
+      - name: integrations-panel
+        purpose_on_page: Gmail status & config (Telegram integration dropped, adr-010)
+        category: display
+        data_consumed: integration status
+        picked: false
+        variants: []
+      - name: watcher-health-panel
+        purpose_on_page: Per-feed health + last poll
+        category: feedback
+        data_consumed: feed_health
+        picked: false
+        variants: []

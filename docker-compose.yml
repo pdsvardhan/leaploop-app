@@ -1,0 +1,30 @@
+services:
+  leaploop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: leaploop:latest
+    container_name: leaploop
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8509:8509"        # host-local; public access is cloudflared -> authentik -> leaploop
+    volumes:
+      - /mnt/storage/websites/leaploop/data:/data
+      - /opt/homeserver/leaploop/secrets.env:/run/secrets/leaploop.env:ro
+    environment:
+      - LEAPLOOP_DB=/data/leaploop.db
+      - LEAPLOOP_DATA=/data
+      - LEAPLOOP_SECRETS=/run/secrets/leaploop.env
+      # - GLITCHTIP_DSN=        # set when GlitchTip is deployed (Stage 5) to enable error capture
+    networks:
+      - authentik-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8509/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+networks:
+  authentik-net:
+    external: true

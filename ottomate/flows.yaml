@@ -1,0 +1,179 @@
+flows:
+  - id: flow-discovery-triage
+    title: Discovery to Triage
+    type: automated
+    priority: critical
+    test_status: not-tested
+    trigger: Watcher poll / new alert email
+    expected_outcome: Clean, tiered role appears in Triage; Tier-A roles are badged
+      and sorted first
+    pre_conditions: []
+    steps:
+      - actor: system
+        action: Watcher polls the ATS feeds (~30 min) and ingests LinkedIn alert emails
+        result: Raw roles fetched from all sources
+      - actor: system
+        action: Cleaner dedupes, applies the config.py India-PM filters, and drops
+          already-applied roles
+        result: Clean role set
+      - actor: system
+        action: Tiering tags each role A/B/C/U
+        result: Roles tiered
+      - actor: system
+        action: New roles are written to the Triage queue; Tier-A roles are badged and
+          sorted first
+        result: Role appears in Triage; Tier-A badged and sorted to the top of the queue
+    edge_cases:
+      - A feed returns malformed JSON - log feed_health err, skip that feed,
+        continue.
+      - Same role from two sources is kept once via the source_id key.
+    linked_features:
+      - feat-ats-watcher
+      - feat-cleaner
+      - feat-linkedin-ingest
+      - feat-tiering
+    linked_pages:
+      - page-triage
+  - id: flow-triage-decision
+    title: Triage decision
+    type: ui
+    priority: critical
+    test_status: not-tested
+    trigger: User opens Triage queue
+    expected_outcome: Yes enqueues tailoring; No skips; Snooze resurfaces later
+    pre_conditions: []
+    steps:
+      - actor: user
+        action: Opens the Triage queue and reviews a role card (optionally Preview JD)
+        result: Role under consideration
+      - actor: user
+        action: Taps Yes / No / Snooze, or Mutes the company
+        result: Decision captured
+      - actor: system
+        action: Yes enqueues tailoring; No marks skipped; Snooze resurfaces later; Mute
+          filters that company
+        result: Role state updated
+    edge_cases:
+      - A snoozed role reappears after its window.
+      - A muted company's future roles are auto-skipped.
+    linked_features:
+      - feat-tiering
+      - feat-triage-queue
+    linked_pages:
+      - leaploop-home
+      - page-triage
+  - id: flow-tailor-pdf
+    title: Tailor to PDF
+    type: automated
+    priority: critical
+    test_status: not-tested
+    trigger: User taps Yes (or manual submit)
+    expected_outcome: Rules pick flex/P5, texlive compiles the constant-named PDF into Apply
+    pre_conditions: []
+    steps:
+      - actor: user
+        action: Taps Yes on a role in Triage
+        result: Role enqueued for tailoring
+      - actor: system
+        action: Fetches JD text (feed body or one-time URL fetch)
+        result: JD text available
+      - actor: system
+        action: Scans JD keywords -> selects flex macros + P5 variant
+        result: Per-JD overrides chosen
+      - actor: system
+        action: Writes per-JD .tex and compiles via texlive
+        result: Constant-named PDF produced
+      - actor: system
+        action: Attaches PDF + apply link (+referral) to Apply queue
+        result: Role appears in Apply
+    edge_cases:
+      - Low-confidence JD match - fall back to the safe default master, never a
+        wrong variant.
+      - texlive compile error - surface the error and keep the prior PDF.
+    linked_features:
+      - feat-apply-queue
+      - feat-pdf-compile
+      - feat-rules-tailor
+    linked_pages:
+      - page-apply
+  - id: flow-apply-confirm
+    title: Apply to confirmed
+    type: mixed
+    priority: important
+    test_status: not-tested
+    trigger: User opens Apply item
+    expected_outcome: He applies on the ATS; Gmail confirmation auto-marks applied
+    pre_conditions: []
+    steps:
+      - actor: user
+        action: Opens apply link, uploads PDF, submits on the ATS
+        result: Application submitted
+      - actor: system
+        action: Detects the confirmation email via Gmail-IMAP
+        result: Match found
+      - actor: system
+        action: Marks role applied, records resume + date, drops from queue
+        result: Tracker updated
+      - actor: user
+        action: (optional) Manually overrides applied state
+        result: State corrected
+    edge_cases:
+      - No confirmation email arrives - role stays pending; manual override
+        available.
+      - Confirmation matched to the wrong role - manual override corrects it.
+    linked_features:
+      - feat-apply-queue
+      - feat-gmail-confirm
+      - feat-tracker
+    linked_pages:
+      - page-apply
+      - page-tracker
+  - id: flow-manual-generate
+    title: Manual generate
+    type: ui
+    priority: nice-to-have
+    test_status: not-tested
+    trigger: User pastes JD text or role URL
+    expected_outcome: Tailored PDF produced without sourcing/filtering
+    pre_conditions: []
+    steps:
+      - actor: user
+        action: Pastes JD text or a role URL on the Generate page
+        result: Input captured
+      - actor: system
+        action: Rules tailor selects flex/P5 and texlive compiles the constant-named PDF
+        result: Tailored PDF produced
+      - actor: user
+        action: Previews/downloads the PDF and applies manually
+        result: PDF in hand
+    edge_cases:
+      - URL fetch fails - prompt to paste the JD text instead.
+    linked_features:
+      - feat-manual-generate
+      - feat-pdf-compile
+      - feat-rules-tailor
+    linked_pages:
+      - page-generate
+  - id: flow-filter-tune
+    title: Filter tuning
+    type: ui
+    priority: important
+    test_status: not-tested
+    trigger: User mutes a company / edits filters
+    expected_outcome: Next poll respects the updated filters
+    pre_conditions: []
+    steps:
+      - actor: user
+        action: Edits filters or mutes a company in Settings
+        result: Filter change saved
+      - actor: system
+        action: The next watcher poll applies the updated config
+        result: Future roles respect the new filters
+    edge_cases:
+      - A filter change that would hide existing triage roles applies to new
+        roles only.
+    linked_features:
+      - feat-cleaner
+      - feat-settings
+    linked_pages:
+      - leaploop-settings

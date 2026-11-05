@@ -1,0 +1,55 @@
+% ===================================================================
+%  preamble.tex  —  shared style + FLEX macros (defaults = GENERIC)
+%  Used by GENERIC.tex and every CVs\CV_<Company>.tex.
+%  A per-JD file changes a resume only by \renewcommand-ing the flex
+%  macros below. The fixed content lives once, in body.tex.
+% ===================================================================
+
+\usepackage[margin=0.5in]{geometry}
+\usepackage[none]{hyphenat}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\raggedright
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\setcounter{secnumdepth}{0}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[{\titlerule[0.8pt]}]
+\titlespacing*{\section}{0pt}{9pt}{4pt}
+\setlist[itemize]{leftmargin=1.2em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
+
+\newcommand{\entry}[2]{\textbf{#1}\hfill\textbf{#2}\\}
+\newcommand{\sub}[1]{\textit{#1}\\[1pt]}
+
+% ============ FLEX MACROS — defaults. Per-JD files \renewcommand these. ============
+
+% (1) Summary descriptor
+\newcommand{\flexDescriptor}{enterprise and e-commerce}
+
+% (2) Wipro competency tail
+\newcommand{\flexWiproTail}{APIs, system integrations, deployment, and product architecture}
+
+% (3) DP World "average order value" phrase  (set to {} to drop)
+\newcommand{\flexDPWorldAOV}{to grow average order value}
+
+% (4) HSBC bullet 5 — the WHOLE bullet (set to {} to drop it entirely)
+\newcommand{\flexHSBCFive}{\item Re-architected the agency allocation engine --- which assigns defaulted loan cases to external collections agencies --- extending it with new rules across product type, region, and agency capacity.}
+
+% (5) 3rd project — pick \projVault (default) or \projPortfolio
+\newcommand{\projVault}{\textbf{Vault7a} --- \textit{Self-hosted home server}\\[1pt]
+Built and operate a self-hosted server running 55+ containerized services --- CI/CD, reverse proxy, DNS, SSO, monitoring, and production hosting for all my applications.}
+\newcommand{\projPortfolio}{\textbf{Portfolio} --- \textit{Interactive 3D personal portfolio}\\[1pt]
+A browsable 3D recreation of my workspace where every object is content --- a cork-board resume, a project monitor, posters, a day/night toggle, and a mini-game --- designed so the site itself \emph{is} the portfolio, not another About-Me page.}
+\newcommand{\flexThirdProject}{\projVault}
+
+% (6) Education A/B-testing bullet — default OFF. Turn on: \renewcommand{\flexEduAB}{\eduABbullet}
+\newcommand{\eduABbullet}{\item Ran A/B tests, defined success metrics, and prototyped products across MBA live projects and case competitions.}
+\newcommand{\flexEduAB}{}
+
+% (7) Skills appends — default empty. Begin each with a comma, e.g. {, Roadmapping, A/B Testing}
+\newcommand{\flexProduct}{}
+\newcommand{\flexAINative}{}
+\newcommand{\flexDomain}{}
+\newcommand{\flexTools}{}

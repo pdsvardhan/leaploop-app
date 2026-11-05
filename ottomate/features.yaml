@@ -1,0 +1,376 @@
+features:
+  - id: feat-ats-watcher
+    title: ATS feed watcher
+    short_description: Polls Greenhouse/Lever/Ashby/Workday/amazon.jobs ~30 min;
+      diffs new roles into the store.
+    type: automated
+    status: done
+    priority: P0
+    size: L
+    test_status: not-tested
+    acceptance_criteria:
+      - content: A poll of the configured ATS feeds completes and writes new roles to
+          the store, recording ok/count/err per company in feed_health.
+        test_status: not-tested
+        linked_test: null
+      - content: Re-polling an unchanged feed adds no duplicate roles (dedupe on the
+          source_id primary key).
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-linkedin-ingest
+    title: LinkedIn alert-email ingest
+    short_description: Reads jobalerts-noreply@linkedin.com via Gmail-IMAP; parses
+      company/title/link as the daily backstop.
+    type: automated
+    status: done
+    priority: P1
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: A LinkedIn job-alert email from jobalerts-noreply@linkedin.com is
+          parsed via Gmail-IMAP into role rows (company, title, link).
+        test_status: passing
+        linked_test: tests/test_engine.py::test_parse_linkedin_extracts_title_company_url
+      - content: LinkedIn-sourced roles are stored with empty jd_text and a NULL
+          fit_hint — never a fabricated score of 0.
+        test_status: not-tested
+        linked_test: null
+      - content: Nothing in the ingest or tailoring path fetches a linkedin.com page;
+          jd_text comes only from the alert email body.
+        test_status: not-tested
+        linked_test: null
+      - content: A role with no JD is surfaced as discovery-only (no fit band, no
+          variant label) and hands off to manual Generate in paste-the-text
+          mode.
+        test_status: not-tested
+        linked_test: null
+      - content: Runs as a daily backstop only - never drives or scrapes the LinkedIn
+          site on a timer.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-cleaner
+    title: Cleaner / filter / dedupe
+    short_description: Dedupes across sources, applies config.py filters, drops
+      already-applied via tracker cross-ref.
+    type: automated
+    status: done
+    priority: P0
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: A role already in the tracker as applied never reappears in Triage.
+        test_status: not-tested
+        linked_test: null
+      - content: The same role from two sources is shown once (dedupe by normalized
+          company + title).
+        test_status: passing
+        linked_test: tests/test_engine.py::test_find_active_by_company_normalizes_casing
+    dependencies: []
+  - id: feat-tiering
+    title: Reputability tiering
+    short_description: Tags A/B/C/unverified via curated Tier-A list + Wikidata
+      size/notability; ATS-presence as legitimacy signal.
+    type: automated
+    status: done
+    priority: P1
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: "Every role is tagged A/B/C/U: curated TIER_A/TIER_B list first, else
+          keyless Wikidata size/notability, else unverified (U)."
+        test_status: passing
+        linked_test: tests/test_engine.py::test_curated_tier_a_and_c
+      - content: A company with no curated or Wikidata match is flagged unverified,
+          never silently dropped.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-triage-queue
+    title: Triage queue
+    short_description: Role cards with yes/no/snooze, preview JD, mute company;
+      filter to Tier-A; sort by tier/age.
+    type: ui
+    status: done
+    priority: P0
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Triage shows role cards (company, title, location/mode, tier badge,
+          source, age) with Yes / No / Snooze, Preview JD, and Mute company.
+        test_status: not-tested
+        linked_test: null
+      - content: Cards can be filtered to Tier-A and sorted by tier or age.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-rules-tailor
+    title: Rules tailoring engine
+    short_description: "Maps JD keywords to flex macros + P5 variant; writes per-JD
+      .tex; safe-default fallback on low confidence. Matching is word-aware
+      (inflection-tolerant, not substring) and domain-first: a process cluster
+      only wins when no domain cluster matches, and a hit in the role title
+      counts 3x a hit in the body."
+    type: automated
+    status: done
+    priority: P0
+    size: L
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Given a JD mentioning payments/UPI, the engine selects the
+          fintech-commission P5 + Domain skills append.
+        test_status: not-tested
+        linked_test: null
+      - content: Generating a PDF while the résumé master holds an unreviewed open-ended
+          employment range returns a warning naming the role; it never blocks
+          generation.
+        test_status: not-tested
+        linked_test: null
+      - content: Confirming the master is current silences that warning, and it returns
+          once the review interval lapses.
+        test_status: not-tested
+        linked_test: null
+      - content: "A keyword matches only as a word, with common inflections: 'ai' does
+          not match inside mainstream/domain/available and 'api' does not match
+          inside capital/rapid, while 'ai-powered', 'apis', 'agentic' and
+          'consumers' still do."
+        test_status: not-tested
+        linked_test: null
+      - content: "A cluster marked kind: process (agile_delivery) is selected only when
+          no domain cluster matches the JD at all."
+        test_status: not-tested
+        linked_test: null
+      - content: A keyword hit in the role title counts three times a hit in the JD
+          body.
+        test_status: not-tested
+        linked_test: null
+      - content: Honest-gap detection uses the same word matcher, so 'rag' does not
+          raise an ML-modeling caveat on a JD that says 'average' or 'leverage'.
+        test_status: not-tested
+        linked_test: null
+      - content: A JD that matches nothing still produces the safe default master, never
+          a partial CV.
+        test_status: not-tested
+        linked_test: null
+      - content: On a JD with no confident cluster match, it falls back to the safe
+          default master (never a wrong variant).
+        test_status: not-tested
+        linked_test: null
+      - content: Output .tex compiles without error and resolves all flex macros.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-pdf-compile
+    title: texlive PDF compile
+    short_description: Compiles the per-JD .tex via a texlive container to the constant-named PDF.
+    type: backend
+    status: done
+    priority: P0
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Compiling a per-JD .tex yields a PDF byte-identical in layout to the
+          Overleaf reference.
+        test_status: not-tested
+        linked_test: null
+      - content: Files written into data/pdfs by the container remain writable by the
+          host user (inheriting group ACL), so host-side regeneration never
+          fails with PermissionError.
+        test_status: not-tested
+        linked_test: null
+      - content: Every output file is named
+          Sai_Vardhan_Palli_Product_Manager_IIMB_CV.pdf.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-apply-queue
+    title: Apply queue
+    short_description: Picked roles with their tailored PDF, apply link and referral
+      draft. The swap-variant control and its labels are derived from
+      rules.yaml, and a role with no variant yet renders an explicit label
+      rather than a blank chip.
+    type: ui
+    status: done
+    priority: P0
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Each Apply card shows the tailored PDF (preview + download), the apply
+          link, and an applied toggle (auto + manual).
+        test_status: passing
+        linked_test: tests/test_engine.py::test_mark_applied_and_undo
+      - content: The variant list and its labels come from rules.yaml, so a cluster
+          added there appears in the swap control with no code change.
+        test_status: not-tested
+        linked_test: null
+      - content: A role with no variant yet renders an explicit label, never a blank
+          chip or a blank dropdown entry.
+        test_status: not-tested
+        linked_test: null
+      - content: Swap-variant regenerates the PDF with a different P5/flex variant in
+          one tap; Copy referral appears on warm-path roles.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-manual-generate
+    title: Manual Generate-PDF
+    short_description: Tailor a PDF from pasted JD text or a role URL, outside the
+      queue. The generated PDF records the cluster that produced it, chip edits
+      persist and round-trip, user values are LaTeX-escaped at render, and the
+      result can be logged as applied (undoably) so the role stops resurfacing
+      in Triage.
+    type: hybrid
+    status: done
+    priority: P2
+    size: S
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Pasting JD text OR a role URL produces a tailored PDF, bypassing
+          sourcing and filtering.
+        test_status: not-tested
+        linked_test: null
+      - content: The editor for a generated résumé seeds its chips from the cluster that
+          produced that PDF, never from the default master.
+        test_status: not-tested
+        linked_test: null
+      - content: "A chip value containing & % $ # or _ compiles to a PDF and reads back
+          unescaped when the editor is reopened; a value that is rejected or
+          trimmed is reported to the user."
+        test_status: not-tested
+        linked_test: null
+      - content: Log-as-applied writes an applied_index row only when none exists for
+          that company and title, and says so when one already did.
+        test_status: not-tested
+        linked_test: null
+      - content: Undo removes that row only while it still carries this résumé's source
+          and path — a row since replaced by a real confirmation is kept.
+        test_status: not-tested
+        linked_test: null
+      - content: Accepts text + URL only - no image/OCR and no file upload.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-tracker
+    title: Application tracker
+    short_description: "Searchable record: company/role/resume
+      PDF/date/source/status; CSV export."
+    type: ui
+    status: done
+    priority: P1
+    size: S
+    test_status: not-tested
+    acceptance_criteria:
+      - content: The tracker lists every application (company, role, which resume PDF,
+          date, source, status) and is searchable.
+        test_status: not-tested
+        linked_test: null
+      - content: The list exports to CSV.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-telegram-push
+    title: Telegram Tier-A push
+    short_description: Pushes Tier-A new roles to the leap_loop_bot Telegram chat.
+    type: automated
+    status: dropped
+    priority: P1
+    size: S
+    test_status: not-tested
+    acceptance_criteria:
+      - content: A new Tier-A role posts a message to the leap_loop_bot Telegram chat
+          within ~30 minutes of discovery.
+        test_status: not-tested
+        linked_test: null
+      - content: Push stays dormant with no error until TELEGRAM_CHAT_ID is configured.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-gmail-confirm
+    title: Gmail auto-confirm applied
+    short_description: Reads Gmail over IMAP to auto-mark roles applied. The
+      connection heals itself once per operation after a dropped socket, never
+      retries an authentication failure, and records errors as plain text.
+    type: automated
+    status: done
+    priority: P1
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: A matching 'application received' email flips the role to applied with
+          timestamp.
+        test_status: passing
+        linked_test: tests/test_engine.py::test_company_from_confirmation_subject
+      - content: A poll cycle opens at most ONE Gmail IMAP connection and issues ONE
+          batched FETCH per leg — never one FETCH per message (the pattern Gmail
+          throttled into 'System Error').
+        test_status: not-tested
+        linked_test: null
+      - content: Confirmation scanning narrows server-side by SUBJECT; it never pulls
+          the whole mailbox since a date.
+        test_status: not-tested
+        linked_test: null
+      - content: When an IMAP leg fails, the cycle summary line reports gmail=FAIL and
+          integration_health records the error — the failure is never silent.
+        test_status: not-tested
+        linked_test: null
+      - content: On an IMAP4.abort the session reconnects once for that operation
+          (capped per session) instead of retrying the socket the server already
+          dropped.
+        test_status: not-tested
+        linked_test: null
+      - content: An authentication failure is not retried — it fails on the first
+          attempt.
+        test_status: not-tested
+        linked_test: null
+      - content: A recorded integration error is stored and shown as plain text, not a
+          Python bytes repr.
+        test_status: not-tested
+        linked_test: null
+      - content: Manual override can set/clear applied regardless of email.
+        test_status: passing
+        linked_test: tests/test_engine.py::test_mark_applied_and_undo
+    dependencies: []
+  - id: feat-settings
+    title: Settings / filter tuning
+    short_description: Filter tuning, muted companies, résumé freshness and honest
+      integration health — each leg reports its last real outcome, not merely
+      whether a credential exists.
+    type: ui
+    status: done
+    priority: P2
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: Settings edits role types/levels/excludes, the watch-list and tiers,
+          and shows integration + watcher health.
+        test_status: not-tested
+        linked_test: null
+      - content: "Each integration leg reports its last real outcome: 'Broken' when it
+          has never succeeded, 'Failing' when it succeeded recently but is
+          failing now."
+        test_status: not-tested
+        linked_test: null
+      - content: Saved filter changes take effect on the next poll.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []
+  - id: feat-auth-deploy
+    title: Auth + deploy
+    short_description: Authentik SSO (single user), Docker on vault7a port 8509, NPM
+      + Cloudflare Tunnel, cron watcher.
+    type: backend
+    status: done
+    priority: P0
+    size: M
+    test_status: not-tested
+    acceptance_criteria:
+      - content: The cockpit is reachable only at jobs.vault7a.xyz behind Authentik SSO
+          (single user); the watcher runs on a 30-minute cron.
+        test_status: not-tested
+        linked_test: null
+      - content: Deployed as a Docker service on VAULT7A port 8509, fronted by NPM +
+          Cloudflare Tunnel.
+        test_status: not-tested
+        linked_test: null
+    dependencies: []

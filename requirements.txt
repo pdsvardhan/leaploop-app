@@ -1,0 +1,2 @@
+# LeapLoop engine — stdlib-first; PyYAML is the only hard dependency.
+PyYAML>=6.0

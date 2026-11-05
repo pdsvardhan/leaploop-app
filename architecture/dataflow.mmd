@@ -1,0 +1,20 @@
+flowchart TD
+  subgraph SRC["1. Source -> Triage (cron, automated)"]
+    A["ATS feeds + LinkedIn alert emails"] --> B["watcher: diff new roles"]
+    B --> C["cleaner: India-PM filter + dedupe + drop-applied"]
+    C --> D["tiering: A/B/C/U"]
+    D --> E[("roles state=triage")]
+    D -->|Tier-A| TG["Telegram push"]
+  end
+  E --> F{"2. Triage (user)"}
+  F -->|Yes| G[("state=picked + enqueue")]
+  F -->|No| H[("state=skipped")]
+  F -->|Snooze| I[("state=snoozed")]
+  F -->|Mute| J["company filtered next cycle"]
+  G --> K["3. tailor: JD keywords -> flex/P5 -> .tex"]
+  K --> L["tectonic -> constant-named PDF"]
+  L --> M[("roles.pdf_path; Apply queue")]
+  M --> N{"4. Apply (user, manual)"}
+  N --> O["gmail_confirm: match confirmation email"]
+  O --> P[("applied=1, applied_at, resume recorded")]
+  N -.manual override.-> P
